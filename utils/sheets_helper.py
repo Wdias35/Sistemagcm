@@ -1,7 +1,7 @@
 import gspread
 import pandas as pd
 from google.oauth2.service_account import Credentials
-from utils.sheets_helper import sheetsHelper
+
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = 'SEU_ID_DA_PLANILHA_AQUI'  # Substitua pelo ID da sua planilha
 

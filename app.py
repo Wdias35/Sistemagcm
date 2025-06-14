@@ -1,9 +1,7 @@
 import streamlit as st
 from utils.sheets_helper import SheetsHelper
 from utils.pdf_generator import PDFGenerator
-import json
-import streamlit as st
-creds = json.loads(st.secrets["creds"])
+
 
 # Configurações iniciais
 st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")

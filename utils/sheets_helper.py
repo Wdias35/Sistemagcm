@@ -7,7 +7,8 @@ class SheetsHelper:
         # Pega o dict do secrets
         creds_dict = st.secrets["creds"]
         scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=scopes)
+
         client = gspread.authorize(creds)
 
         # Pega o ID da planilha também dos secrets

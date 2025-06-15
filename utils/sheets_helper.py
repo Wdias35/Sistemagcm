@@ -1,47 +1,35 @@
-import streamlit as st
+from google.oauth2.service_account import Credentials
 import gspread
-import pandas as pd
-from google.oauth2 import service_account
-
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
-
-# Usar o secrets direto
-creds_dict = st.secrets["creds"]
-creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-
-SPREADSHEET_ID = st.secrets["spreadsheet_id"]  # Vamos guardar no secrets
+import streamlit as st
 
 class SheetsHelper:
     def __init__(self):
-        self.client = gspread.authorize(creds)
-        self.sheet = self.client.open_by_key(SPREADSHEET_ID).sheet1
+        # Pega o dict do secrets
+        creds_dict = st.secrets["creds"]
+        scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        client = gspread.authorize(creds)
 
-    def inserir_ocorrencia(self, registro: dict):
+        # Pega o ID da planilha também dos secrets
+        self.sheet = client.open_by_key(st.secrets["sheet_id"]).sheet1
+
+    def inserir_ocorrencia(self, dados):
         try:
-            linha = [
-                registro["Data"],
-                registro["Horário"],
-                registro["Local"],
-                registro["Base Responsável"],
-                registro["Tipo de Ocorrência"],
-                registro["Observações"]
-            ]
-            self.sheet.append_row(linha)
+            self.sheet.append_row(list(dados.values()))
             return True
         except Exception as e:
-            print("Erro ao inserir:", e)
+            st.error(f"Erro ao inserir ocorrência: {e}")
             return False
 
-    def ler_todas_ocorrencias(self, mestre=False, base=None):
+    def ler_todas_ocorrencias(self, mestre=False):
         try:
             dados = self.sheet.get_all_records()
-            df = pd.DataFrame(dados)
-            if not mestre and base:
-                df = df[df['Base Responsável'] == base]
-            return df
+            if mestre:
+                return dados
+            else:
+                # Filtro por base
+                base = st.session_state["login"]
+                return [d for d in dados if d["Base Responsável"] == base]
         except Exception as e:
-            print("Erro ao ler dados:", e)
-            return pd.DataFrame()
+            st.error(f"Erro ao ler ocorrências: {e}")
+            return []

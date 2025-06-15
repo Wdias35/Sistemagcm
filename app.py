@@ -1,10 +1,6 @@
 import streamlit as st
-import json
-from google.oauth2 import service_account
-import gspread
 from utils.sheets_helper import SheetsHelper
 from utils.pdf_generator import PDFGenerator
-from utils.sheets_helper import SheetsHelper
 
 # Configurações iniciais
 st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
@@ -26,7 +22,7 @@ def login():
             st.success(f"Bem-vindo(a), {usuario}!")
         else:
             st.error("Usuário ou senha inválidos")
-    if "login" not in st.session_state:
+    if "login" not in st.session_state or st.session_state["login"] is None:
         st.stop()
 
 def main():
@@ -75,8 +71,11 @@ def main():
 
     elif opc == "Gerar relatório PDF":
         st.header("Relatório PDF")
-        dados = sh.ler_todas_ocorrencias(mestre=user=="mestre")
-        if dados:
+        dados = sh.ler_todas_ocorrencias(
+            mestre=(user == "mestre"),
+            base=user if user != "mestre" else None
+        )
+        if not dados.empty:
             pdf_bytes = pdf_gen.gerar_pdf(dados)
             st.download_button(
                 label="Baixar Relatório PDF",

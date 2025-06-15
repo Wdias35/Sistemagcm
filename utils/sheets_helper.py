@@ -2,10 +2,13 @@ import streamlit as st
 import gspread
 import json
 import pandas as pd
-from google.oauth2.service_account import Credentials
+from google.oauth2 import service_account
 
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SPREADSHEET_ID = 'SEU_ID_DA_PLANILHA_AQUI'  # Substitua pelo ID da sua planilha
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets",
+"https://www.googleapis.com/auth/drive"]
+
+creds_dict = json.loads(st.secrets["creds"])
+creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
 class SheetsHelper:
     def __init__(self):

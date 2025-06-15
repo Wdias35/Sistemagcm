@@ -1,18 +1,21 @@
 import streamlit as st
 import gspread
-import json
 import pandas as pd
 from google.oauth2 import service_account
 
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets",
-"https://www.googleapis.com/auth/drive"]
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
 
-creds_dict = json.loads(st.secrets["creds"])
+# Usar o secrets direto
+creds_dict = st.secrets["creds"]
 creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+
+SPREADSHEET_ID = st.secrets["spreadsheet_id"]  # Vamos guardar no secrets
 
 class SheetsHelper:
     def __init__(self):
-        creds = Credentials.from_service_account_file('creds.json', scopes=SCOPES)
         self.client = gspread.authorize(creds)
         self.sheet = self.client.open_by_key(SPREADSHEET_ID).sheet1
 
@@ -32,14 +35,12 @@ class SheetsHelper:
             print("Erro ao inserir:", e)
             return False
 
-    def ler_todas_ocorrencias(self, mestre=False):
+    def ler_todas_ocorrencias(self, mestre=False, base=None):
         try:
             dados = self.sheet.get_all_records()
             df = pd.DataFrame(dados)
-            if not mestre:
-                # Filtar por base responsável se não for mestre
-                if 'Base Responsável' in df.columns:
-                    df = df[df['Base Responsável'] == 'base1']  # Ajuste conforme usuário logado
+            if not mestre and base:
+                df = df[df['Base Responsável'] == base]
             return df
         except Exception as e:
             print("Erro ao ler dados:", e)

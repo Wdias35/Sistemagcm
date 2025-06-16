@@ -1,4 +1,5 @@
 import streamlit as st
+st.write("🔑 st.secrets keys:", list(st.secrets.to_dict().keys()))
 from utils.sheets_helper import SheetsHelper
 from utils.pdf_generator import PDFGenerator
 

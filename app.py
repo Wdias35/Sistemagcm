@@ -1,9 +1,14 @@
 import streamlit as st
+
+# 1) Sempre primeiro: configurações de página
+st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
+
+# 2) Debug temporário: veja quais chaves estão em st.secrets
 st.write("🔑 st.secrets keys:", list(st.secrets.to_dict().keys()))
+
+# 3) Agora os imports dos seus módulos
 from utils.sheets_helper import SheetsHelper
 from utils.pdf_generator import PDFGenerator
-
-st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
 
 USUARIOS = {
     "base1": "senha1",
@@ -79,3 +84,4 @@ if __name__ == "__main__":
     if "login" not in st.session_state:
         st.session_state["login"] = None
     main()
+

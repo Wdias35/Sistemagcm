@@ -1,38 +1,31 @@
-# utils/sheets_helper.py
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import streamlit as st
-import pandas as pd
+from google.oauth2.service_account import Credentials
+
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+SHEET_IDS = st.secrets["planilhas"]  # <- novo trecho
 
 def autenticar():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["creds"], scope)
+    creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=SCOPE)
     client = gspread.authorize(creds)
     return client
 
 def abrir_planilha():
+    login = st.session_state.get("login")  # login da base (ex: base1)
+    sheet_id = SHEET_IDS.get(login)
+    if not sheet_id:
+        raise Exception(f"ID da planilha não encontrado para o login: {login}")
     client = autenticar()
-    SHEET_NAME = "SistemaGCM"
-    return client.open(SHEET_NAME)
+    return client.open_by_key(sheet_id)
 
-def carregar_dados(nome_aba):
+def carregar_dados():
     planilha = abrir_planilha()
-    try:
-        aba = planilha.worksheet(nome_aba)
-    except gspread.WorksheetNotFound:
-        aba = planilha.add_worksheet(title=nome_aba, rows="100", cols="10")
-        cabecalhos = ["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"]
-        aba.append_row(cabecalhos)
+    aba = planilha.worksheet("Ocorrências")
     dados = aba.get_all_records()
-    return pd.DataFrame(dados)
+    return dados
 
-def inserir_ocorrencia(nome_aba, dados):
+def inserir_ocorrencia(dados):
     planilha = abrir_planilha()
-    try:
-        aba = planilha.worksheet(nome_aba)
-    except gspread.WorksheetNotFound:
-        aba = planilha.add_worksheet(title=nome_aba, rows="100", cols="10")
-        cabecalhos = ["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"]
-        aba.append_row(cabecalhos)
-    aba.append_row(list(dados.values()))
+    aba = planilha.worksheet("Ocorrências")
+    aba.append_row(dados)
     return True

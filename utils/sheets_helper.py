@@ -1,14 +1,14 @@
-import gspread
-import pandas as pd
-from google.oauth2.service_account import Credentials
 import streamlit as st
+import pandas as pd
+import gspread
+from google.oauth2.service_account import Credentials
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/drive"
 ]
 
-SHEET_NAME = "SistemaGCM"  # Nome da planilha principal no Google Sheets
+SHEET_NAME = "SistemaGCM"
 
 @st.cache_resource
 def autenticar():
@@ -29,7 +29,6 @@ def carregar_dados(nome_base):
         df = pd.DataFrame(dados)
         return df
     except gspread.exceptions.WorksheetNotFound:
-        # Aba não existe ainda. Cria a aba com cabeçalho padrão.
         planilha = abrir_planilha()
         cabecalho = ["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"]
         planilha.add_worksheet(title=nome_base, rows="1000", cols=str(len(cabecalho)))

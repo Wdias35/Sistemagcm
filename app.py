@@ -1,89 +1,97 @@
-# ✅ app.py
 import streamlit as st
-import pandas as pd
-from utils.sheets_helper import carregar_dados, inserir_ocorrencia
-from utils.pdf_generator import gerar_pdf
+from utils.sheets_helper import SheetsHelper
+from utils.pdf_generator import PDFGenerator
+
+# Configurações iniciais
+st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
+
+# Simples banco de usuários (exemplo)
+USUARIOS = {
+    "base1": "senha1",
+    "base2": "senha2",
+    "mestre": "master123"
+}
 
 def login():
     st.title("Login - Sistema GCM Guarulhos")
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
-    
     if st.button("Entrar"):
-        if usuario and senha:
-            st.session_state.usuario = usuario
+        if usuario in USUARIOS and USUARIOS[usuario] == senha:
+            st.session_state["login"] = usuario
             st.success(f"Bem-vindo(a), {usuario}!")
-            st.experimental_rerun()
         else:
             st.error("Usuário ou senha inválidos")
-
-def logout():
-    if st.sidebar.button("🔒 Sair"):
-        st.session_state.clear()
-        st.experimental_rerun()
-
-def montar_formulario():
-    st.subheader("📋 Registrar Ocorrência")
-    data = st.date_input("Data")
-    horario = st.time_input("Horário")
-    local = st.text_input("Local")
-    tipo = st.selectbox("Tipo de Ocorrência", [
-        "Abordagem", "Veículo Recolhido", "Crime", "Prisão em Flagrante", "Procurado Capturado"])
-    observacoes = st.text_area("Observações")
-
-    if st.button("✅ Registrar Ocorrência"):
-        registro = {
-            "data": str(data),
-            "horario": str(horario),
-            "local": local,
-            "base": st.session_state.usuario,
-            "tipo": tipo,
-            "observacoes": observacoes
-        }
-        sucesso = inserir_ocorrencia(registro, st.session_state.usuario)
-        if sucesso:
-            st.success("Ocorrência registrada com sucesso!")
-        else:
-            st.error("Erro ao registrar ocorrência.")
-
-def visualizar_dados():
-    st.subheader("📊 Ocorrências Registradas")
-
-    if st.session_state.usuario == "mestre":
-        dados = carregar_dados("todas")
-    else:
-        dados = carregar_dados(st.session_state.usuario)
-
-    if dados is not None and not dados.empty:
-        st.dataframe(dados, use_container_width=True)
-
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            if st.download_button("📥 Exportar como PDF", gerar_pdf(dados), file_name="relatorio_ocorrencias.pdf"):
-                st.success("PDF gerado com sucesso!")
-        with col2:
-            st.download_button("📥 Baixar CSV", dados.to_csv(index=False).encode('utf-8'), file_name="ocorrencias.csv")
-    else:
-        st.info("Nenhuma ocorrência registrada ainda.")
+    if "login" not in st.session_state or st.session_state["login"] is None:
+        st.stop()
 
 def main():
-    st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
-    st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Bras%C3%A3o_de_Guarulhos.svg/1200px-Bras%C3%A3o_de_Guarulhos.svg.png", width=100)
-    st.sidebar.title("📌 Menu")
-    
-    if "usuario" not in st.session_state:
-        login()
-        return
+    login()
+    user = st.session_state["login"]
+    sh = SheetsHelper()
+    pdf_gen = PDFGenerator()
 
-    st.sidebar.success(f"Usuário: {st.session_state.usuario}")
-    logout()
+    st.sidebar.title("Menu")
+    if user == "mestre":
+        st.sidebar.write("Login Mestre - acesso total")
+        opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Gerar relatório PDF"])
+    else:
+        st.sidebar.write(f"Login Base: {user}")
+        opc = st.sidebar.selectbox("O que deseja fazer?", ["Enviar ocorrência", "Gerar relatório PDF"])
 
-    st.title(f"🔐 Sistema GCM Guarulhos - Base: {st.session_state.usuario}")
-    st.markdown("---")
+    if opc == "Enviar ocorrência":
+        st.header("Registrar Ocorrência")
 
-    montar_formulario()
-    st.markdown("---")
-    visualizar_dados()
+        with st.form("form_ocorrencia", clear_on_submit=True):
+            data = st.date_input("Data")
+            horario = st.time_input("Horário")
+            local = st.text_input("Local")
+            base_responsavel = user
+            tipo = st.selectbox("Tipo de Ocorrência", [
+                "Abordagem", "Veículo Recolhido", "Crime",
+                "Prisão em Flagrante", "Procurado Capturado"
+            ])
+            observacoes = st.text_area("Observações")
+
+            enviar = st.form_submit_button("Enviar")
+            if enviar:
+                registro = {
+                    "Data": data.strftime("%d/%m/%Y"),
+                    "Horário": horario.strftime("%H:%M:%S"),
+                    "Local": local,
+                    "Base Responsável": base_responsavel,
+                    "Tipo de Ocorrência": tipo,
+                    "Observações": observacoes
+                }
+                sucesso = sh.inserir_ocorrencia(registro)
+                if sucesso:
+                    st.success("Ocorrência registrada com sucesso!")
+                else:
+                    st.error("Erro ao registrar ocorrência.")
+
+    elif opc == "Gerar relatório PDF":
+        st.header("Relatório PDF")
+        dados = sh.ler_todas_ocorrencias(
+            mestre=(user == "mestre"),
+            base=user if user != "mestre" else None
+        )
+        if not dados.empty:
+            pdf_bytes = pdf_gen.gerar_pdf(dados)
+            st.download_button(
+                label="Baixar Relatório PDF",
+                data=pdf_bytes,
+                file_name="relatorio_ocorrencias.pdf",
+                mime="application/pdf"
+            )
+        else:
+            st.info("Nenhuma ocorrência encontrada.")
+
+    elif opc == "Ver dados" and user == "mestre":
+        st.header("Dados de todas as bases")
+        dados = sh.ler_todas_ocorrencias(mestre=True)
+        st.dataframe(dados)
 
 if __name__ == "__main__":
+    if "login" not in st.session_state:
+        st.session_state["login"] = None
     main()

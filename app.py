@@ -4,7 +4,7 @@ import streamlit as st
 st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
 
 # 2) Debug temporário: veja quais chaves estão em st.secrets
-st.write("🔑 st.secrets keys:", list(st.secrets.to_dict().keys()))
+#st.write("🔑 st.secrets keys:", list(st.secrets.to_dict().keys()))
 
 # 3) Agora os imports dos seus módulos
 from utils import sheets_helper as sh

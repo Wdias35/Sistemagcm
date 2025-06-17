@@ -1,56 +1,38 @@
+# utils/sheets_helper.py
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 import streamlit as st
 import pandas as pd
-import gspread
-from google.oauth2.service_account import Credentials
 
-SCOPE = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
-
-SHEET_NAME = "SistemaGCM"
-
-@st.cache_resource
 def autenticar():
-    creds_info = st.secrets["creds"]
-    credentials = Credentials.from_service_account_info(creds_info, scopes=SCOPE)
-    client = gspread.authorize(credentials)
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["creds"], scope)
+    client = gspread.authorize(creds)
     return client
 
 def abrir_planilha():
     client = autenticar()
+    SHEET_NAME = "SistemaGCM"
     return client.open(SHEET_NAME)
 
-def carregar_dados(nome_base):
+def carregar_dados(nome_aba):
+    planilha = abrir_planilha()
     try:
-        planilha = abrir_planilha()
-        aba = planilha.worksheet(nome_base)
-        dados = aba.get_all_records()
-        df = pd.DataFrame(dados)
-        return df
-    except gspread.exceptions.WorksheetNotFound:
-        planilha = abrir_planilha()
-        cabecalho = ["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"]
-        planilha.add_worksheet(title=nome_base, rows="1000", cols=str(len(cabecalho)))
-        aba = planilha.worksheet(nome_base)
-        aba.append_row(cabecalho)
-        return pd.DataFrame(columns=cabecalho)
+        aba = planilha.worksheet(nome_aba)
+    except gspread.WorksheetNotFound:
+        aba = planilha.add_worksheet(title=nome_aba, rows="100", cols="10")
+        cabecalhos = ["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"]
+        aba.append_row(cabecalhos)
+    dados = aba.get_all_records()
+    return pd.DataFrame(dados)
 
-def inserir_ocorrencia(dados):
+def inserir_ocorrencia(nome_aba, dados):
+    planilha = abrir_planilha()
     try:
-        planilha = abrir_planilha()
-        aba = planilha.worksheet(dados["Base Responsável"])
-        nova_linha = [
-            dados["Data"],
-            dados["Horário"],
-            dados["Local"],
-            dados["Base Responsável"],
-            dados["Tipo de Ocorrência"],
-            dados["Observações"]
-        ]
-        aba.append_row(nova_linha)
-        return True
-    except Exception as e:
-        print(f"Erro ao inserir ocorrência: {e}")
-        return False
-
+        aba = planilha.worksheet(nome_aba)
+    except gspread.WorksheetNotFound:
+        aba = planilha.add_worksheet(title=nome_aba, rows="100", cols="10")
+        cabecalhos = ["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"]
+        aba.append_row(cabecalhos)
+    aba.append_row(list(dados.values()))
+    return True

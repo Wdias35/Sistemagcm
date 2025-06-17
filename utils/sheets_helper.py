@@ -1,40 +1,41 @@
+
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 
-# 1) Defina os scopes antes de usar
+# Define escopos de acesso ao Google Sheets e Drive
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-class SheetsHelper:
-    def __init__(self):
-        # 2) Leia o dicionário de credenciais direto do secrets.toml
-        creds_dict = st.secrets["creds"]
+# Lê as credenciais do st.secrets
+creds_dict = st.secrets["creds"]
+credentials = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
-        # 3) Crie o objeto de credencial com os scopes
-        credentials = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+# Autentica com o Google Sheets
+client = gspread.authorize(credentials)
 
-        # 4) Autentique-se com gspread
-        client = gspread.authorize(credentials)
+# Nome da planilha central
+SHEET_NAME = "BancoGCM"
 
-        # 5) Pegue o sheet_id do secrets
-        sheet_id = st.secrets["sheet_id"]
+def abrir_planilha():
+    """Abre e retorna a planilha principal"""
+    return client.open(SHEET_NAME)
 
-        # 6) Abra a planilha
-        self.sheet = client.open_by_key(sheet_id).sheet1
+def carregar_dados(nome_aba):
+    """Carrega dados de uma aba específica"""
+    planilha = abrir_planilha()
+    aba = planilha.worksheet(nome_aba)
+    return aba.get_all_records()
 
-    def inserir_ocorrencia(self, registro):
-        try:
-            self.sheet.append_row(list(registro.values()))
-            return True
-        except Exception:
-            return False
+def adicionar_ocorrencia(nome_aba, dados):
+    """Adiciona uma nova ocorrência na aba"""
+    planilha = abrir_planilha()
+    aba = planilha.worksheet(nome_aba)
+    aba.append_row(dados)
 
-    def ler_todas_ocorrencias(self, mestre=False):
-        try:
-            data = self.sheet.get_all_records()
-            return data
-        except Exception:
-            return []
+def obter_bases():
+    """Retorna os nomes de todas as abas (bases)"""
+    planilha = abrir_planilha()
+    return [aba.title for aba in planilha.worksheets()]

@@ -10,7 +10,7 @@ SCOPES = [
 ]
 
 # Lê as credenciais do st.secrets
-creds_dict = st.secrets["credsw"]
+creds_dict = st.secrets["creds"]
 credentials = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
 # Autentica com o Google Sheets

@@ -27,7 +27,7 @@ def carregar_dados(nome_aba):
 def inserir_ocorrencia(registro):
     try:
         planilha = abrir_planilha()
-        aba = planilha.worksheet("Página1")  # Ou nome da aba que está usando
+        aba = planilha.worksheet("base1")  # Ou nome da aba que está usando
         aba.append_row([
             registro["Data"],
             registro["Horário"],

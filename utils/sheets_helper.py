@@ -1,41 +1,61 @@
-
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Define escopos de acesso ao Google Sheets e Drive
+# Escopos de acesso
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-# Lê as credenciais do st.secrets
+# Credenciais e autenticação
 creds_dict = st.secrets["creds"]
 credentials = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-
-# Autentica com o Google Sheets
 client = gspread.authorize(credentials)
 
-# Nome da planilha central
+# Nome da planilha
 SHEET_NAME = "SistemaGCM"
 
 def abrir_planilha():
-    """Abre e retorna a planilha principal"""
     return client.open(SHEET_NAME)
 
 def carregar_dados(nome_aba):
-    """Carrega dados de uma aba específica"""
     planilha = abrir_planilha()
     aba = planilha.worksheet(nome_aba)
     return aba.get_all_records()
 
-def adicionar_ocorrencia(nome_aba, dados):
-    """Adiciona uma nova ocorrência na aba"""
-    planilha = abrir_planilha()
-    aba = planilha.worksheet(nome_aba)
-    aba.append_row(dados)
+def inserir_ocorrencia(registro):
+    try:
+        planilha = abrir_planilha()
+        aba = planilha.worksheet("Página1")  # Ou nome da aba que está usando
+        aba.append_row([
+            registro["Data"],
+            registro["Horário"],
+            registro["Local"],
+            registro["Base Responsável"],
+            registro["Tipo de Ocorrência"],
+            registro["Observações"]
+        ])
+        return True
+    except Exception as e:
+        st.error(f"Erro ao inserir ocorrência: {e}")
+        return False
 
 def obter_bases():
-    """Retorna os nomes de todas as abas (bases)"""
     planilha = abrir_planilha()
     return [aba.title for aba in planilha.worksheets()]
+
+def ler_todas_ocorrencias(mestre=False):
+    planilha = abrir_planilha()
+    abas = planilha.worksheets()
+    todas_ocorrencias = []
+
+    for aba in abas:
+        if not mestre and aba.title != st.session_state["login"]:
+            continue
+        dados = aba.get_all_records()
+        for d in dados:
+            d["Base"] = aba.title
+            todas_ocorrencias.append(d)
+    
+    return todas_ocorrencias

@@ -1,51 +1,54 @@
+# ✅ app.py
 import streamlit as st
 from utils.sheets_helper import carregar_dados, inserir_ocorrencia
-from datetime import datetime
 
-st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
-st.title("🔐 Login - Sistema GCM Guarulhos")
-
-with st.form("login"):
+def login():
+    st.title("Login - Sistema GCM Guarulhos")
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
-    login_btn = st.form_submit_button("Entrar")
+    if st.button("Entrar"):
+        if usuario and senha:
+            st.session_state.usuario = usuario
+            st.experimental_rerun()
+        else:
+            st.error("Usuário ou senha inválidos")
 
-usuarios_validos = {"base1": "123", "base2": "456", "base3": "789"}
+def montar_formulario():
+    st.subheader("Registrar Ocorrência")
+    data = st.date_input("Data")
+    horario = st.time_input("Horário")
+    local = st.text_input("Local")
+    tipo = st.selectbox("Tipo de Ocorrência", [
+        "Abordagem", "Veículo Recolhido", "Crime", "Prisão em Flagrante", "Procurado Capturado"])
+    observacoes = st.text_area("Observações")
 
-if login_btn:
-    if usuario in usuarios_validos and senha == usuarios_validos[usuario]:
-        st.success(f"Bem-vindo(a), {usuario}!")
+    if st.button("Registrar Ocorrência"):
+        registro = {
+            "data": str(data),
+            "horario": str(horario),
+            "local": local,
+            "base": st.session_state.usuario,
+            "tipo": tipo,
+            "observacoes": observacoes
+        }
+        sucesso = inserir_ocorrencia(registro, st.session_state.usuario)
+        if sucesso:
+            st.success("Ocorrência registrada com sucesso!")
+        else:
+            st.error("Erro ao registrar ocorrência.")
 
-        aba = st.sidebar.radio("Escolha uma opção", ["Registrar Ocorrência", "Visualizar Dados"])
+def main():
+    st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
+    if "usuario" not in st.session_state:
+        login()
+        return
 
-        if aba == "Registrar Ocorrência":
-            st.subheader("📋 Registrar Nova Ocorrência")
-            with st.form("form_ocorrencia"):
-                data = st.date_input("Data", value=datetime.now().date())
-                horario = st.time_input("Horário", value=datetime.now().time())
-                local = st.text_input("Local")
-                tipo = st.selectbox("Tipo de Ocorrência", ["Abordagem", "Veículo Recolhido", "Crime", "Prisão em Flagrante", "Procurado Capturado"])
-                obs = st.text_area("Observações")
-                enviar = st.form_submit_button("Salvar Ocorrência")
+    st.title(f"📄 Sistema GCM - Base: {st.session_state.usuario}")
+    montar_formulario()
+    dados = carregar_dados(st.session_state.usuario)
+    if dados:
+        st.subheader("Ocorrências Registradas")
+        st.dataframe(dados)
 
-            if enviar:
-                registro = {
-                    "Data": str(data),
-                    "Horário": str(horario),
-                    "Local": local,
-                    "Base Responsável": usuario,
-                    "Tipo de Ocorrência": tipo,
-                    "Observações": obs
-                }
-                sucesso = inserir_ocorrencia(registro)
-                if sucesso:
-                    st.success("Ocorrência registrada com sucesso!")
-                else:
-                    st.error("Erro ao registrar ocorrência.")
-
-        elif aba == "Visualizar Dados":
-            st.subheader("📊 Ocorrências da sua Base")
-            df = carregar_dados(usuario)
-            st.dataframe(df)
-    else:
-        st.error("Usuário ou senha inválidos.")
+if __name__ == "__main__":
+    main()

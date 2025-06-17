@@ -17,7 +17,7 @@ def conectar():
 def carregar_dados(base):
     try:
         client = conectar()
-        planilha = client.open(SHEET_NAME)
+        planilha = client.open(SistemaGCM)
         aba = planilha.worksheet(base)
         dados = aba.get_all_records()
         return pd.DataFrame(dados)
@@ -28,7 +28,7 @@ def carregar_dados(base):
 def inserir_ocorrencia(ocorrencia, base):
     try:
         client = conectar()
-        planilha = client.open(SHEET_NAME)
+        planilha = client.open(SistemaGCM)
         try:
             aba = planilha.worksheet(base)
         except gspread.exceptions.WorksheetNotFound:

@@ -7,7 +7,7 @@ st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
 st.write("🔑 st.secrets keys:", list(st.secrets.to_dict().keys()))
 
 # 3) Agora os imports dos seus módulos
-from utils.sheets_helper import SheetsHelper
+from utils import sheets_helper as sh
 from utils.pdf_generator import PDFGenerator
 
 USUARIOS = {

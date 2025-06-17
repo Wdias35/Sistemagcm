@@ -1,6 +1,8 @@
 import streamlit as st
 from utils.sheets_helper import SheetsHelper
 from utils.pdf_generator import PDFGenerator
+from utils.sheets_helper import carregar_dados, inserir_ocorrencia
+
 
 # Configurações iniciais
 st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")

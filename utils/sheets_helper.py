@@ -17,7 +17,7 @@ credentials = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 client = gspread.authorize(credentials)
 
 # Nome da planilha central
-SHEET_NAME = "BancoGCM"
+SHEET_NAME = "SistemaGCM"
 
 def abrir_planilha():
     """Abre e retorna a planilha principal"""

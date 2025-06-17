@@ -1,61 +1,57 @@
-import streamlit as st
 import gspread
+import pandas as pd
 from google.oauth2.service_account import Credentials
+import streamlit as st
 
-# Escopos de acesso
-SCOPES = [
+SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
+    "https://www.googleapis.com/auth/drive",
 ]
 
-# Credenciais e autenticação
-creds_dict = st.secrets["creds"]
-credentials = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-client = gspread.authorize(credentials)
+SHEET_NAME = "SistemaGCM"  # Nome da planilha principal no Google Sheets
 
-# Nome da planilha
-SHEET_NAME = "SistemaGCM"
+@st.cache_resource
+def autenticar():
+    creds_info = st.secrets["creds"]
+    credentials = Credentials.from_service_account_info(creds_info, scopes=SCOPE)
+    client = gspread.authorize(credentials)
+    return client
 
 def abrir_planilha():
+    client = autenticar()
     return client.open(SHEET_NAME)
 
-def carregar_dados(nome_aba):
-    planilha = abrir_planilha()
-    aba = planilha.worksheet(nome_aba)
-    return aba.get_all_records()
-
-def inserir_ocorrencia(registro):
+def carregar_dados(nome_base):
     try:
         planilha = abrir_planilha()
-        aba = planilha.worksheet("base1")  # Ou nome da aba que está usando
-        aba.append_row([
-            registro["Data"],
-            registro["Horário"],
-            registro["Local"],
-            registro["Base Responsável"],
-            registro["Tipo de Ocorrência"],
-            registro["Observações"]
-        ])
+        aba = planilha.worksheet(nome_base)
+        dados = aba.get_all_records()
+        df = pd.DataFrame(dados)
+        return df
+    except gspread.exceptions.WorksheetNotFound:
+        # Aba não existe ainda. Cria a aba com cabeçalho padrão.
+        planilha = abrir_planilha()
+        cabecalho = ["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"]
+        planilha.add_worksheet(title=nome_base, rows="1000", cols=str(len(cabecalho)))
+        aba = planilha.worksheet(nome_base)
+        aba.append_row(cabecalho)
+        return pd.DataFrame(columns=cabecalho)
+
+def inserir_ocorrencia(dados):
+    try:
+        planilha = abrir_planilha()
+        aba = planilha.worksheet(dados["Base Responsável"])
+        nova_linha = [
+            dados["Data"],
+            dados["Horário"],
+            dados["Local"],
+            dados["Base Responsável"],
+            dados["Tipo de Ocorrência"],
+            dados["Observações"]
+        ]
+        aba.append_row(nova_linha)
         return True
     except Exception as e:
-        st.error(f"Erro ao inserir ocorrência: {e}")
+        print(f"Erro ao inserir ocorrência: {e}")
         return False
 
-def obter_bases():
-    planilha = abrir_planilha()
-    return [aba.title for aba in planilha.worksheets()]
-
-def ler_todas_ocorrencias(mestre=False):
-    planilha = abrir_planilha()
-    abas = planilha.worksheets()
-    todas_ocorrencias = []
-
-    for aba in abas:
-        if not mestre and aba.title != st.session_state["login"]:
-            continue
-        dados = aba.get_all_records()
-        for d in dados:
-            d["Base"] = aba.title
-            todas_ocorrencias.append(d)
-    
-    return todas_ocorrencias

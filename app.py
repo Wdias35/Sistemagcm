@@ -1,79 +1,51 @@
 import streamlit as st
-from utils.sheets_helper import SheetsHelper
-from utils.pdf_generator import gerar_pdf
+from utils.sheets_helper import carregar_dados, inserir_ocorrencia
 from datetime import datetime
 
-st.set_page_config(page_title="Sistema GCM Guarulhos", layout="centered")
+st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
+st.title("🔐 Login - Sistema GCM Guarulhos")
 
-# Login simples por base
-usuarios = {
-    "base1": "123",
-    "base2": "123",
-    "base3": "123",
-}
-
-if "usuario" not in st.session_state:
-    st.session_state.usuario = None
-
-if st.session_state.usuario is None:
-    st.title("Login - Sistema GCM Guarulhos")
+with st.form("login"):
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
-    if st.button("Entrar"):
-        if usuario in usuarios and usuarios[usuario] == senha:
-            st.session_state.usuario = usuario
-            st.rerun()
-        else:
-            st.error("Usuário ou senha incorretos")
-else:
-    base_logada = st.session_state.usuario
-    st.sidebar.success(f"Bem-vindo(a), {base_logada}!")
-    sh = SheetsHelper()
+    login_btn = st.form_submit_button("Entrar")
 
-    st.title("Registro de Ocorrências - GCM Guarulhos")
+usuarios_validos = {"base1": "123", "base2": "456", "base3": "789"}
 
-    # Exibe dados existentes da base
-    try:
-        dados = sh.carregar_dados(base_logada)
-        st.subheader("Ocorrências registradas")
-        st.dataframe(dados)
-    except Exception as e:
-        st.error("Erro ao carregar os dados da planilha")
+if login_btn:
+    if usuario in usuarios_validos and senha == usuarios_validos[usuario]:
+        st.success(f"Bem-vindo(a), {usuario}!")
 
-    st.subheader("Nova Ocorrência")
-    with st.form("form_ocorrencia"):
-        data = st.date_input("Data", datetime.today())
-        horario = st.time_input("Horário")
-        local = st.text_input("Local")
-        tipo = st.selectbox("Tipo de Ocorrência", ["Abordagem", "Veículo Recolhido", "Crime", "Prisão em Flagrante", "Procurado Capturado"])
-        observacoes = st.text_area("Observações")
-        enviar = st.form_submit_button("Enviar")
+        aba = st.sidebar.radio("Escolha uma opção", ["Registrar Ocorrência", "Visualizar Dados"])
 
-    if enviar:
-        registro = [
-            data.strftime("%d/%m/%Y"),
-            horario.strftime("%H:%M"),
-            local,
-            base_logada,
-            tipo,
-            observacoes
-        ]
-        try:
-            sucesso = sh.inserir_ocorrencia(base_logada, registro)
-            if sucesso:
-                st.success("Ocorrência registrada com sucesso!")
-                st.rerun()
-            else:
-                st.error("Erro ao registrar ocorrência.")
-        except Exception as e:
-            st.error(f"Erro ao inserir ocorrência: {e}")
+        if aba == "Registrar Ocorrência":
+            st.subheader("📋 Registrar Nova Ocorrência")
+            with st.form("form_ocorrencia"):
+                data = st.date_input("Data", value=datetime.now().date())
+                horario = st.time_input("Horário", value=datetime.now().time())
+                local = st.text_input("Local")
+                tipo = st.selectbox("Tipo de Ocorrência", ["Abordagem", "Veículo Recolhido", "Crime", "Prisão em Flagrante", "Procurado Capturado"])
+                obs = st.text_area("Observações")
+                enviar = st.form_submit_button("Salvar Ocorrência")
 
-    st.markdown("---")
-    st.subheader("Exportar relatório PDF")
-    if st.button("Gerar PDF"):
-        try:
-            gerar_pdf(base_logada, dados)
-            with open("relatorio.pdf", "rb") as f:
-                st.download_button("Clique para baixar o relatório", f, file_name="relatorio.pdf")
-        except:
-            st.error("Erro ao gerar PDF.")
+            if enviar:
+                registro = {
+                    "Data": str(data),
+                    "Horário": str(horario),
+                    "Local": local,
+                    "Base Responsável": usuario,
+                    "Tipo de Ocorrência": tipo,
+                    "Observações": obs
+                }
+                sucesso = inserir_ocorrencia(registro)
+                if sucesso:
+                    st.success("Ocorrência registrada com sucesso!")
+                else:
+                    st.error("Erro ao registrar ocorrência.")
+
+        elif aba == "Visualizar Dados":
+            st.subheader("📊 Ocorrências da sua Base")
+            df = carregar_dados(usuario)
+            st.dataframe(df)
+    else:
+        st.error("Usuário ou senha inválidos.")

@@ -1,49 +1,61 @@
-# ✅ utils/sheets_helper.py
+import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import pandas as pd
-import streamlit as st
 
-SHEET_NAME = "SistemaGcm"
+# Escopos de acesso
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
 
-@st.cache_resource
-def conectar():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds_dict = st.secrets["creds"]
-    credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
-    client = gspread.authorize(credentials)
-    return client
+# Credenciais e autenticação
+creds_dict = st.secrets["creds"]
+credentials = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+client = gspread.authorize(credentials)
 
-def carregar_dados(base):
+# Nome da planilha
+SHEET_NAME = "SistemaGCM"
+
+def abrir_planilha():
+    return client.open(SHEET_NAME)
+
+def carregar_dados(nome_aba):
+    planilha = abrir_planilha()
+    aba = planilha.worksheet(nome_aba)
+    return aba.get_all_records()
+
+def inserir_ocorrencia(registro):
     try:
-        client = conectar()
-        planilha = client.open(SistemaGCM)
-        aba = planilha.worksheet(base)
-        dados = aba.get_all_records()
-        return pd.DataFrame(dados)
-    except Exception as e:
-        print("Erro ao carregar dados:", e)
-        return pd.DataFrame()
-
-def inserir_ocorrencia(ocorrencia, base):
-    try:
-        client = conectar()
-        planilha = client.open(SistemaGCM)
-        try:
-            aba = planilha.worksheet(base)
-        except gspread.exceptions.WorksheetNotFound:
-            aba = planilha.add_worksheet(title=base, rows="1000", cols="20")
-            aba.append_row(["Data", "Horário", "Local", "Base Responsável", "Tipo de Ocorrência", "Observações"])
-
+        planilha = abrir_planilha()
+        aba = planilha.worksheet("Página1")  # Ou nome da aba que está usando
         aba.append_row([
-            ocorrencia["data"],
-            ocorrencia["horario"],
-            ocorrencia["local"],
-            ocorrencia["base"],
-            ocorrencia["tipo"],
-            ocorrencia["observacoes"]
+            registro["Data"],
+            registro["Horário"],
+            registro["Local"],
+            registro["Base Responsável"],
+            registro["Tipo de Ocorrência"],
+            registro["Observações"]
         ])
         return True
     except Exception as e:
-        print("Erro ao inserir ocorrência:", e)
+        st.error(f"Erro ao inserir ocorrência: {e}")
         return False
+
+def obter_bases():
+    planilha = abrir_planilha()
+    return [aba.title for aba in planilha.worksheets()]
+
+def ler_todas_ocorrencias(mestre=False):
+    planilha = abrir_planilha()
+    abas = planilha.worksheets()
+    todas_ocorrencias = []
+
+    for aba in abas:
+        if not mestre and aba.title != st.session_state["login"]:
+            continue
+        dados = aba.get_all_records()
+        for d in dados:
+            d["Base"] = aba.title
+            todas_ocorrencias.append(d)
+    
+    return todas_ocorrencias

@@ -1,87 +1,79 @@
 import streamlit as st
+from utils.sheets_helper import SheetsHelper
+from utils.pdf_generator import gerar_pdf
+from datetime import datetime
 
-# 1) Sempre primeiro: configurações de página
-st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
+st.set_page_config(page_title="Sistema GCM Guarulhos", layout="centered")
 
-# 2) Debug temporário: veja quais chaves estão em st.secrets
-#st.write("🔑 st.secrets keys:", list(st.secrets.to_dict().keys()))
-
-# 3) Agora os imports dos seus módulos
-from utils import sheets_helper as sh
-from utils.pdf_generator import PDFGenerator
-
-USUARIOS = {
-    "base1": "senha1",
-    "base2": "senha2",
-    "mestre": "master123"
+# Login simples por base
+usuarios = {
+    "base1": "123",
+    "base2": "123",
+    "base3": "123",
 }
 
-def login():
+if "usuario" not in st.session_state:
+    st.session_state.usuario = None
+
+if st.session_state.usuario is None:
     st.title("Login - Sistema GCM Guarulhos")
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
     if st.button("Entrar"):
-        if usuario in USUARIOS and USUARIOS[usuario] == senha:
-            st.session_state["login"] = usuario
-            st.success(f"Bem-vindo(a), {usuario}!")
+        if usuario in usuarios and usuarios[usuario] == senha:
+            st.session_state.usuario = usuario
+            st.rerun()
         else:
-            st.error("Usuário ou senha inválidos")
-    if "login" not in st.session_state or st.session_state["login"] is None:
-        st.stop()
+            st.error("Usuário ou senha incorretos")
+else:
+    base_logada = st.session_state.usuario
+    st.sidebar.success(f"Bem-vindo(a), {base_logada}!")
+    sh = SheetsHelper()
 
-def main():
-    login()
-    user = st.session_state["login"]
-    dados = sh.carregar_dados("base1")
-    pdf_gen = PDFGenerator()
+    st.title("Registro de Ocorrências - GCM Guarulhos")
 
-    st.sidebar.title("Menu")
-    if user == "mestre":
-        opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Gerar relatório PDF"])
-    else:
-        opc = st.sidebar.selectbox("O que deseja fazer?", ["Enviar ocorrência", "Gerar relatório PDF"])
-
-    if opc == "Enviar ocorrência":
-        st.header("Registrar Ocorrência")
-        with st.form("form_ocorrencia", clear_on_submit=True):
-            data = st.date_input("Data")
-            horario = st.time_input("Horário")
-            local = st.text_input("Local")
-            tipo = st.selectbox("Tipo de Ocorrência", [
-                "Abordagem", "Veículo Recolhido", "Crime",
-                "Prisão em Flagrante", "Procurado Capturado"
-            ])
-            observacoes = st.text_area("Observações")
-            enviar = st.form_submit_button("Enviar")
-            if enviar:
-                registro = {
-                    "Data": data.strftime("%d/%m/%Y"),
-                    "Horário": horario.strftime("%H:%M:%S"),
-                    "Local": local,
-                    "Base Responsável": user,
-                    "Tipo de Ocorrência": tipo,
-                    "Observações": observacoes
-                }
-                sucesso = sh.inserir_ocorrencia(registro)
-                if sucesso:
-                    st.success("Ocorrência registrada com sucesso!")
-                else:
-                    st.error("Erro ao registrar ocorrência.")
-
-    elif opc == "Gerar relatório PDF":
-        dados = sh.ler_todas_ocorrencias(mestre=(user=="mestre"))
-        if dados:
-            pdf_bytes = pdf_gen.gerar_pdf(dados)
-            st.download_button("Baixar Relatório PDF", pdf_bytes, "relatorio_ocorrencias.pdf", "application/pdf")
-        else:
-            st.info("Nenhuma ocorrência encontrada.")
-
-    elif opc == "Ver dados":
-        dados = sh.ler_todas_ocorrencias(mestre=True)
+    # Exibe dados existentes da base
+    try:
+        dados = sh.carregar_dados(base_logada)
+        st.subheader("Ocorrências registradas")
         st.dataframe(dados)
+    except Exception as e:
+        st.error("Erro ao carregar os dados da planilha")
 
-if __name__ == "__main__":
-    if "login" not in st.session_state:
-        st.session_state["login"] = None
-    main()
+    st.subheader("Nova Ocorrência")
+    with st.form("form_ocorrencia"):
+        data = st.date_input("Data", datetime.today())
+        horario = st.time_input("Horário")
+        local = st.text_input("Local")
+        tipo = st.selectbox("Tipo de Ocorrência", ["Abordagem", "Veículo Recolhido", "Crime", "Prisão em Flagrante", "Procurado Capturado"])
+        observacoes = st.text_area("Observações")
+        enviar = st.form_submit_button("Enviar")
 
+    if enviar:
+        registro = [
+            data.strftime("%d/%m/%Y"),
+            horario.strftime("%H:%M"),
+            local,
+            base_logada,
+            tipo,
+            observacoes
+        ]
+        try:
+            sucesso = sh.inserir_ocorrencia(base_logada, registro)
+            if sucesso:
+                st.success("Ocorrência registrada com sucesso!")
+                st.rerun()
+            else:
+                st.error("Erro ao registrar ocorrência.")
+        except Exception as e:
+            st.error(f"Erro ao inserir ocorrência: {e}")
+
+    st.markdown("---")
+    st.subheader("Exportar relatório PDF")
+    if st.button("Gerar PDF"):
+        try:
+            gerar_pdf(base_logada, dados)
+            with open("relatorio.pdf", "rb") as f:
+                st.download_button("Clique para baixar o relatório", f, file_name="relatorio.pdf")
+        except:
+            st.error("Erro ao gerar PDF.")

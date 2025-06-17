@@ -32,7 +32,7 @@ def login():
 def main():
     login()
     user = st.session_state["login"]
-    sh = SheetsHelper()
+    dados = sh.carregar_dados("base1")
     pdf_gen = PDFGenerator()
 
     st.sidebar.title("Menu")

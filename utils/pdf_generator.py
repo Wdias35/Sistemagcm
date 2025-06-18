@@ -1,12 +1,26 @@
-from fpdf import FPDF
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
-class PDFGenerator:
-    def gerar_pdf(self, dados):
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, "Relatório de Ocorrências", ln=True, align="C")
-        for d in dados:
-            linha = ", ".join([f"{k}: {v}" for k, v in d.items()])
-            pdf.multi_cell(0, 10, linha)
-        return pdf.output(dest='S').encode('latin-1')
+def gerar_pdf(dados):
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    largura, altura = A4
+
+    y = altura - 50
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, y, "Relatório de Ocorrências - GCM Guarulhos")
+    y -= 30
+
+    c.setFont("Helvetica", 10)
+    for idx, row in dados.iterrows():
+        linha = f"{row.get('Data', '')} - {row.get('Horário', '')} - {row.get('Local', '')} - {row.get('Base Responsável', '')} - {row.get('Tipo de Ocorrência', '')}"
+        c.drawString(50, y, linha)
+        y -= 15
+        if y < 50:
+            c.showPage()
+            y = altura - 50
+
+    c.save()
+    buffer.seek(0)
+    return buffer

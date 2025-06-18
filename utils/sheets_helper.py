@@ -1,7 +1,7 @@
-# sheets_helper.py (corrigido)
+# sheets_helper.py (corrigido
+import streamlit as st
 import gspread
 import pandas as pd
-import streamlit as st
 from google.oauth2.service_account import Credentials
 
 NOME_PLANILHA = "SistemaGCM"

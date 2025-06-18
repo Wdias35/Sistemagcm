@@ -14,7 +14,7 @@ def conectar():
 
 def carregar_dados(base):
     client = conectar()
-    planilha = client.open(NOME_PLANILHA)
+    planilha = client.open(base1)
     dados_finais = []
 
     if base == "todas":

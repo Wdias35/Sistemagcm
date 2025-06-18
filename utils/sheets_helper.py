@@ -1,22 +1,16 @@
-import streamlit as st
 import gspread
 import pandas as pd
 from google.oauth2.service_account import Credentials
+import streamlit as st  # ok aqui, desde que usado com cuidado
 
 # Nome da planilha no Google Sheets
 NOME_PLANILHA = "SistemaGCM"
 
-# Conectar com Google Sheets usando as credenciais do Streamlit Secrets
 def conectar():
-    try:
-        creds = Credentials.from_service_account_info(st.secrets["creds"])
-        client = gspread.authorize(creds)
-        return client
-    except Exception as e:
-        st.error(f"Erro ao conectar à planilha: {e}")
-        raise  # Força o erro aparecer completo
+    creds = Credentials.from_service_account_info(st.secrets["creds"])
+    client = gspread.authorize(creds)
+    return client
 
-# Carregar os dados da aba específica da base
 def carregar_dados(base):
     try:
         client = conectar()
@@ -35,14 +29,14 @@ def carregar_dados(base):
         return pd.DataFrame(dados_finais)
 
     except Exception as e:
-        st.error(f"Erro ao carregar dados: {e}")
-        return pd.DataFrame([])
+        # Em vez de usar st.error(), apenas levanta o erro para o app.py tratar
+        raise RuntimeError(f"Erro ao carregar dados: {e}")
 
-# Inserir uma nova ocorrência na aba da base
 def inserir_ocorrencia(registro, base):
     try:
         client = conectar()
         planilha = client.open(NOME_PLANILHA)
+
         try:
             aba = planilha.worksheet(base)
         except gspread.exceptions.WorksheetNotFound:
@@ -55,5 +49,4 @@ def inserir_ocorrencia(registro, base):
         return True
 
     except Exception as e:
-        st.error(f"Erro ao inserir ocorrência: {e}")
-        return False
+        raise RuntimeError(f"Erro ao inserir ocorrência: {e}")

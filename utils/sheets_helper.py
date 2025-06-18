@@ -4,6 +4,7 @@ import gspread
 import pandas as pd
 from google.oauth2.service_account import Credentials
 
+
 NOME_PLANILHA = "SistemaGCM"
 
 # Conecta com a planilha Google via Streamlit Secrets

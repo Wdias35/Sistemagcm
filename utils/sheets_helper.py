@@ -8,7 +8,10 @@ NOME_PLANILHA = "SistemaGCM"
 
 # Conecta com a planilha Google via Streamlit Secrets
 def conectar():
-    creds = Credentials.from_service_account_info(st.secrets["creds"])
+    scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=scopes)
+
+    #creds = Credentials.from_service_account_info(st.secrets["creds"])
     client = gspread.authorize(creds)
     return client
 

@@ -1,6 +1,9 @@
 streamlit
-gspread
 pandas
+gspread
+google-auth
+reportlab
 folium
 streamlit-folium
 geopy
+

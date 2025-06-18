@@ -1,4 +1,5 @@
 streamlit
 gspread
+pandas
 google-auth
-fpdf
+reportlab

@@ -10,9 +10,8 @@ NOME_PLANILHA = "SistemaGCM"
 def conectar():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=scopes)
-
     #creds = Credentials.from_service_account_info(st.secrets["creds"])
-    client = gspread.authorize(creds)
+    #client = gspread.authorize(creds)
     return client
 
 # Carrega os dados da aba específica (ou todas as abas)

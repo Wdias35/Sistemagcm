@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from google.oauth2.service_account import Credentials
 
-NOME_PLANILHA = "Ocorrencias_GCM"
+NOME_PLANILHA = "SistemaGCM"
 
 # Conecta com a planilha Google via Streamlit Secrets
 def conectar():

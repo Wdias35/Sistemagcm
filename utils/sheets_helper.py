@@ -8,10 +8,12 @@ NOME_PLANILHA = "SistemaGCM"
 
 # Conecta com a planilha Google via Streamlit Secrets
 def conectar():
-    scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=scopes)
-    #creds = Credentials.from_service_account_info(st.secrets["creds"])
-    #client = gspread.authorize(creds)
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=scopes)
+    client = gspread.authorize(creds)
     return client
 
 # Carrega os dados da aba específica (ou todas as abas)
@@ -50,3 +52,4 @@ def inserir_ocorrencia(dados, base):
     ]
     aba.insert_row(linha, ultima_linha)
     return True
+

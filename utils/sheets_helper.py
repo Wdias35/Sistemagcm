@@ -38,19 +38,7 @@ import streamlit as st
 def inserir_ocorrencia(registro, base):
     try:
         client = conectar()
-    except Exception as e:
-        st.error("Erro ao conectar com o Google Sheets:")
-        st.exception(e)
-        return False
-
-    try:
         planilha = client.open(NOME_PLANILHA)
-    except Exception as e:
-        st.error("Erro ao abrir a planilha:")
-        st.exception(e)
-        return False
-
-    try:
         try:
             aba = planilha.worksheet(base)
         except:
@@ -61,9 +49,6 @@ def inserir_ocorrencia(registro, base):
         valores = list(registro.values())
         aba.append_row(valores)
         return True
-
     except Exception as e:
-        st.error("Erro ao inserir os dados na aba:")
-        st.exception(e)
+        st.error(f"Erro ao inserir ocorrência: {e}")  # <- mostra o erro na tela
         return False
-

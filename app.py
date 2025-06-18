@@ -99,6 +99,8 @@ def main():
     elif opc == "Ver dados" and user == "mestre":
         st.header("📊 Dados de todas as bases")
         try:
+            dados = sh.carregar_dados("base1")
+
             dados = carregar_dados("todas")
             st.dataframe(dados)
         except Exception as e:

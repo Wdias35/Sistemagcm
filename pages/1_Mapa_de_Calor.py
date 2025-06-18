@@ -1,41 +1,46 @@
 import streamlit as st
 import pandas as pd
 import folium
+from folium.plugins import HeatMap
 from streamlit_folium import st_folium
+from geopy.geocoders import Nominatim
+import time
 from utils.sheets_helper import carregar_dados
 
-st.set_page_config(page_title="Mapa de Calor GCM", layout="wide")
-st.title("🌍 Mapa de Calor das Ocorrências")
+st.set_page_config(page_title="Mapa de Calor", layout="wide")
+st.title("🗺️ Mapa de Calor - Ocorrências GCM")
 
-# Carrega os dados
-user = st.session_state.get("login", None)
-if not user:
-    st.warning("Por favor, faça login na página principal.")
+if "login" not in st.session_state or st.session_state["login"] != "mestre":
+    st.warning("Acesso permitido apenas para o login mestre.")
     st.stop()
 
-dados = carregar_dados("todas" if user == "mestre" else user)
+# Carrega dados da planilha
+dados = carregar_dados("todas")
+if not isinstance(dados, pd.DataFrame) or dados.empty:
+    st.info("Nenhuma ocorrência encontrada.")
+    st.stop()
 
-# Simulador de coordenadas (caso não tenha latitude/longitude na planilha)
-# ATENÇÃO: isso é apenas ilustrativo para gerar o mapa
-import random
-def gerar_coords_fake(local):
-    random.seed(local)  # mesma cidade/rua gera mesmos pontos
-    lat = -23.47 + random.uniform(-0.02, 0.02)
-    lon = -46.52 + random.uniform(-0.02, 0.02)
-    return lat, lon
+geolocator = Nominatim(user_agent="sistema-gcm")
+map_data = []
 
-# Adiciona coordenadas simuladas
-if "latitude" not in dados.columns or "longitude" not in dados.columns:
-    latitudes = []
-    longitudes = []
+with st.spinner("Gerando coordenadas para os locais informados..."):
     for _, row in dados.iterrows():
-        lat, lon = gerar_coords_fake(row.get("local", "Guarulhos"))
-        latitudes.append(lat)
-        longitudes.append(lon)
-    dados["latitude"] = latitudes
-    dados["longitude"] = longitudes
+        endereco = row.get("local", "")
+        if endereco:
+            try:
+                location = geolocator.geocode(endereco + ", Guarulhos, SP, Brasil")
+                if location:
+                    map_data.append([location.latitude, location.longitude])
+            except:
+                continue
+            time.sleep(1)
 
-# Gera o mapa
-m = folium.Map(location=[-23.47, -46.52], zoom_start=12)
+if not map_data:
+    st.error("Não foi possível localizar nenhum endereço.")
+    st.stop()
 
-from folium.plugins import Heat
+m = folium.Map(location=[-23.4786, -46.5272], zoom_start=13)
+HeatMap(map_data).add_to(m)
+
+st.success(f"{len(map_data)} ocorrências localizadas.")
+st_folium(m, width=800, height=500)

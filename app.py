@@ -5,6 +5,14 @@ from utils.sheets_helper import carregar_dados, inserir_ocorrencia
 
 # Configurações iniciais
 st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
+try:
+    from utils.sheets_helper import conectar
+    client = conectar()
+    st.success("Conectado com sucesso à planilha!")
+except Exception as e:
+    st.error("Erro ao conectar à planilha:")
+    st.exception(e)
+
 
 # Banco de usuários
 USUARIOS = {

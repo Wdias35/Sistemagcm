@@ -1,12 +1,12 @@
+# sheets_helper.py (corrigido)
 import gspread
 import pandas as pd
+import streamlit as st
 from google.oauth2.service_account import Credentials
 
-# Nome da planilha e aba padrão
 NOME_PLANILHA = "Ocorrencias_GCM"
-ABA_PADRAO = "Base"
 
-# Carregar credenciais do secrets ou arquivo local
+# Conecta com a planilha Google via Streamlit Secrets
 def conectar():
     creds = Credentials.from_service_account_info(st.secrets["creds"])
     client = gspread.authorize(creds)

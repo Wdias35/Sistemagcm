@@ -31,10 +31,13 @@ def carregar_dados(base):
 
     return pd.DataFrame(dados_finais)
 
+import streamlit as st
+
 def inserir_ocorrencia(registro, base):
     try:
         client = conectar()
         planilha = client.open(NOME_PLANILHA)
+
         try:
             aba = planilha.worksheet(base)
         except:
@@ -45,6 +48,7 @@ def inserir_ocorrencia(registro, base):
         valores = list(registro.values())
         aba.append_row(valores)
         return True
+
     except Exception as e:
-        print("Erro ao inserir ocorrência:", e)
+        st.exception(e)  # Mostra o erro completo na interface
         return False

@@ -1,52 +1,49 @@
 import gspread
-import pandas as pd
 from google.oauth2.service_account import Credentials
-import streamlit as st  # ok aqui, desde que usado com cuidado
+import streamlit as st
+import pandas as pd
 
-# Nome da planilha no Google Sheets
 NOME_PLANILHA = "SistemaGCM"
 
+# Conecta com a planilha Google via Streamlit Secrets
 def conectar():
     creds = Credentials.from_service_account_info(st.secrets["creds"])
     client = gspread.authorize(creds)
     return client
 
+# Carrega os dados da aba específica (ou todas as abas)
 def carregar_dados(base):
-    try:
-        client = conectar()
-        planilha = client.open(NOME_PLANILHA)
-        dados_finais = []
+    client = conectar()
+    planilha = client.open(NOME_PLANILHA)
+    dados_finais = []
 
-        if base == "todas":
-            for aba in planilha.worksheets():
-                valores = aba.get_all_records()
-                dados_finais.extend(valores)
-        else:
+    if base == "todas":
+        for aba in planilha.worksheets():
+            valores = aba.get_all_records()
+            dados_finais.extend(valores)
+    else:
+        try:
             aba = planilha.worksheet(base)
             valores = aba.get_all_records()
             dados_finais.extend(valores)
+        except:
+            pass
 
-        return pd.DataFrame(dados_finais)
+    return pd.DataFrame(dados_finais)
 
-    except Exception as e:
-        # Em vez de usar st.error(), apenas levanta o erro para o app.py tratar
-        raise RuntimeError(f"Erro ao carregar dados: {e}")
-
-def inserir_ocorrencia(registro, base):
-    try:
-        client = conectar()
-        planilha = client.open(NOME_PLANILHA)
-
-        try:
-            aba = planilha.worksheet(base)
-        except gspread.exceptions.WorksheetNotFound:
-            aba = planilha.add_worksheet(title=base, rows="1000", cols="20")
-            cabecalho = list(registro.keys())
-            aba.append_row(cabecalho)
-
-        valores = list(registro.values())
-        aba.append_row(valores)
-        return True
-
-    except Exception as e:
-        raise RuntimeError(f"Erro ao inserir ocorrência: {e}")
+# Insere uma nova ocorrência na aba correspondente
+def inserir_ocorrencia(dados, base):
+    client = conectar()
+    planilha = client.open(NOME_PLANILHA)
+    aba = planilha.worksheet(base)
+    ultima_linha = len(aba.get_all_values()) + 1
+    linha = [
+        dados["data"],
+        dados["horario"],
+        dados["local"],
+        dados["base"],
+        dados["tipo"],
+        dados["observacoes"]
+    ]
+    aba.insert_row(linha, ultima_linha)
+    return True

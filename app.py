@@ -1,8 +1,6 @@
 import streamlit as st
-#from utils.sheets_helper import SheetsHelper
-from utils.pdf_generator import PDFGenerator
+from utils.pdf_generator import gerar_pdf
 from utils.sheets_helper import carregar_dados, inserir_ocorrencia
-
 
 # Configurações iniciais
 st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
@@ -30,8 +28,6 @@ def login():
 def main():
     login()
     user = st.session_state["login"]
-    sh = SheetsHelper()
-    pdf_gen = PDFGenerator()
 
     st.sidebar.title("Menu")
     if user == "mestre":
@@ -58,14 +54,14 @@ def main():
             enviar = st.form_submit_button("Enviar")
             if enviar:
                 registro = {
-                    "Data": data.strftime("%d/%m/%Y"),
-                    "Horário": horario.strftime("%H:%M:%S"),
-                    "Local": local,
-                    "Base Responsável": base_responsavel,
-                    "Tipo de Ocorrência": tipo,
-                    "Observações": observacoes
+                    "data": data.strftime("%d/%m/%Y"),
+                    "horario": horario.strftime("%H:%M:%S"),
+                    "local": local,
+                    "base": base_responsavel,
+                    "tipo": tipo,
+                    "observacoes": observacoes
                 }
-                sucesso = sh.inserir_ocorrencia(registro)
+                sucesso = inserir_ocorrencia(registro, base_responsavel)
                 if sucesso:
                     st.success("Ocorrência registrada com sucesso!")
                 else:
@@ -73,12 +69,9 @@ def main():
 
     elif opc == "Gerar relatório PDF":
         st.header("Relatório PDF")
-        dados = sh.ler_todas_ocorrencias(
-            mestre=(user == "mestre"),
-            base=user if user != "mestre" else None
-        )
+        dados = carregar_dados("todas" if user == "mestre" else user)
         if not dados.empty:
-            pdf_bytes = pdf_gen.gerar_pdf(dados)
+            pdf_bytes = gerar_pdf(dados)
             st.download_button(
                 label="Baixar Relatório PDF",
                 data=pdf_bytes,
@@ -90,7 +83,7 @@ def main():
 
     elif opc == "Ver dados" and user == "mestre":
         st.header("Dados de todas as bases")
-        dados = sh.ler_todas_ocorrencias(mestre=True)
+        dados = carregar_dados("todas")
         st.dataframe(dados)
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+# app.py (corrigido e completo)
 import streamlit as st
 from utils.pdf_generator import gerar_pdf
 from utils.sheets_helper import carregar_dados, inserir_ocorrencia
@@ -5,7 +6,7 @@ from utils.sheets_helper import carregar_dados, inserir_ocorrencia
 # Configurações iniciais
 st.set_page_config(page_title="Sistema GCM Guarulhos", layout="wide")
 
-# Simples banco de usuários (exemplo)
+# Banco de usuários
 USUARIOS = {
     "base1": "senha1",
     "base2": "senha2",
@@ -47,8 +48,7 @@ def main():
             base_responsavel = user
             tipo = st.selectbox("Tipo de Ocorrência", [
                 "Abordagem", "Veículo Recolhido", "Crime",
-                "Prisão em Flagrante", "Procurado Capturado"
-            ])
+                "Prisão em Flagrante", "Procurado Capturado"])
             observacoes = st.text_area("Observações")
 
             enviar = st.form_submit_button("Enviar")
@@ -61,11 +61,14 @@ def main():
                     "tipo": tipo,
                     "observacoes": observacoes
                 }
-                sucesso = inserir_ocorrencia(registro, base_responsavel)
-                if sucesso:
-                    st.success("Ocorrência registrada com sucesso!")
-                else:
-                    st.error("Erro ao registrar ocorrência.")
+                try:
+                    sucesso = inserir_ocorrencia(registro, base_responsavel)
+                    if sucesso:
+                        st.success("Ocorrência registrada com sucesso!")
+                    else:
+                        st.error("Erro ao registrar ocorrência.")
+                except Exception as e:
+                    st.error(f"Erro ao registrar ocorrência: {e}")
 
     elif opc == "Gerar relatório PDF":
         st.header("Relatório PDF")
@@ -76,8 +79,7 @@ def main():
                 label="Baixar Relatório PDF",
                 data=pdf_bytes,
                 file_name="relatorio_ocorrencias.pdf",
-                mime="application/pdf"
-            )
+                mime="application/pdf")
         else:
             st.info("Nenhuma ocorrência encontrada.")
 

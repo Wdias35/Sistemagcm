@@ -19,6 +19,8 @@ except Exception as e:
 USUARIOS = {
     "base1": "senha1",
     "base2": "senha2",
+    "base3": "senha3",
+    "base4": "senha4",
     "mestre": "master123"
 }
 

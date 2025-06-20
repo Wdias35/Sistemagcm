@@ -20,7 +20,9 @@ def gerar_pdf(dados):
         elementos.append(Paragraph("Nenhuma ocorrência encontrada.", styles["Normal"]))
     else:
         # Converte DataFrame em lista de listas (tabela)
-        tabela_dados = [list(dados.columns)] + dados.values.tolist()
+        #tabela_dados = [list(dados.columns)] + dados.values.tolist()
+        # Converte DataFrame em lista de listas (tabela), forçando texto
+tabela_dados = [list(map(str, dados.columns))] + dados.astype(str).values.tolist()
 
         tabela = Table(tabela_dados, repeatRows=1)
 

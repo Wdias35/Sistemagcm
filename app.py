@@ -40,10 +40,10 @@ def main():
             data = st.date_input("Data")
             horario = st.time_input("Horário")
             local = st.text_input("Local")
-            latitude = st.text_input("Latitude (ex: -23.4543)")
-            longitude = st.text_input("Longitude (ex: -46.5333)")
             tipo = st.selectbox("Tipo", ["Abordagem", "Veículo Recolhido", "Crime", "Prisão em Flagrante", "Procurado Capturado"])
             observacoes = st.text_area("Observações")
+              latitude = st.text_input("Latitude (ex: -23.4543)")
+            longitude = st.text_input("Longitude (ex: -46.5333)")
 
             enviar = st.form_submit_button("Enviar")
             if enviar:

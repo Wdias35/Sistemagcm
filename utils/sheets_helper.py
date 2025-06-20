@@ -37,16 +37,24 @@ def inserir_ocorrencia(registro, base):
     try:
         client = conectar()
         planilha = client.open(NOME_PLANILHA)
+def inserir_ocorrencia(registro, base):
+    try:
+        client = conectar()
+        planilha = client.open(NOME_PLANILHA)
 
-        # Tenta acessar a aba. Se não existir, cria e define cabeçalho
+        # Tenta acessar a aba da base
         try:
             aba = planilha.worksheet(base)
+            # Se a aba estiver vazia (sem cabeçalho), recria
+            if not aba.get_all_values():
+                cabecalho = ["data", "horario", "local", "base", "tipo", "observacoes", "latitude", "longitude"]
+                aba.append_row(cabecalho)
         except:
             aba = planilha.add_worksheet(title=base, rows="1000", cols="20")
             cabecalho = ["data", "horario", "local", "base", "tipo", "observacoes", "latitude", "longitude"]
             aba.append_row(cabecalho)
 
-        # Garante que os dados estejam na ordem correta
+        # Garante a ordem dos dados
         valores = [
             registro.get("data", ""),
             registro.get("horario", ""),

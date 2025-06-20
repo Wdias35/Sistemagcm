@@ -51,11 +51,11 @@ def main():
                     "data": data.strftime("%d/%m/%Y"),
                     "horario": horario.strftime("%H:%M:%S"),
                     "local": local,
-                    "latitude": latitude,
-                    "longitude": longitude,
                     "base": user,
                     "tipo": tipo,
-                    "observacoes": observacoes
+                    "observacoes": observacoes,
+                    "latitude": latitude,
+                    "longitude": longitude
                 }
                 if inserir_ocorrencia(registro, user):
                     st.success("Ocorrência registrada com sucesso!")

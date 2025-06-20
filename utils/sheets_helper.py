@@ -1,22 +1,18 @@
 import streamlit as st
 import gspread
-from google.oauth2.service_account import Credentials
 import pandas as pd
+from google.oauth2.service_account import Credentials
 
-SHEET_NAME = "SistemaGCM"
+# Nome da planilha no Google Sheets
 NOME_PLANILHA = "SistemaGCM"
 
-# Conecta com a planilha Google via Streamlit Secrets
+# Conecta com a planilha usando credenciais do Streamlit Secrets
 def conectar():
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=scopes)
+    creds = Credentials.from_service_account_info(st.secrets["creds"])
     client = gspread.authorize(creds)
     return client
 
-# Carrega os dados da aba específica (ou todas as abas)
+# Carrega os dados da aba específica (base) ou de todas
 def carregar_dados(base):
     client = conectar()
     planilha = client.open(NOME_PLANILHA)
@@ -36,19 +32,33 @@ def carregar_dados(base):
 
     return pd.DataFrame(dados_finais)
 
-# Insere uma nova ocorrência na aba correspondente
-def inserir_ocorrencia(dados, base):
-    client = conectar()
-    planilha = client.open(NOME_PLANILHA)
-    aba = planilha.worksheet(base)
-    ultima_linha = len(aba.get_all_values()) + 1
-    linha = [
-        dados["data"],
-        dados["horario"],
-        dados["local"],
-        dados["base"],
-        dados["tipo"],
-        dados["observacoes"]
-    ]
-    aba.insert_row(linha, ultima_linha)
-    return True
+# Insere nova ocorrência com todos os campos, incluindo latitude e longitude
+def inserir_ocorrencia(registro, base):
+    try:
+        client = conectar()
+        planilha = client.open(NOME_PLANILHA)
+
+        # Tenta acessar a aba. Se não existir, cria e define cabeçalho
+        try:
+            aba = planilha.worksheet(base)
+        except:
+            aba = planilha.add_worksheet(title=base, rows="1000", cols="20")
+            cabecalho = ["data", "horario", "local", "base", "tipo", "observacoes", "latitude", "longitude"]
+            aba.append_row(cabecalho)
+
+        # Garante que os dados estejam na ordem correta
+        valores = [
+            registro.get("data", ""),
+            registro.get("horario", ""),
+            registro.get("local", ""),
+            registro.get("base", ""),
+            registro.get("tipo", ""),
+            registro.get("observacoes", ""),
+            registro.get("latitude", ""),
+            registro.get("longitude", "")
+        ]
+        aba.append_row(valores)
+        return True
+    except Exception as e:
+        print("Erro ao inserir ocorrência:", e)
+        return False

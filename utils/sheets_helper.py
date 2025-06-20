@@ -57,6 +57,6 @@ def inserir_ocorrencia(registro, base):
         return True
     except Exception as e:
         st.error(f"Erro ao inserir ocorrência: {e}")
-        return False
+        return true
 
 

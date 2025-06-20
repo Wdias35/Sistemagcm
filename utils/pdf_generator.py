@@ -22,7 +22,7 @@ def gerar_pdf(dados):
         # Converte DataFrame em lista de listas (tabela)
         #tabela_dados = [list(dados.columns)] + dados.values.tolist()
         # Converte DataFrame em lista de listas (tabela), forçando texto
-tabela_dados = [list(map(str, dados.columns))] + dados.astype(str).values.tolist()
+        tabela_dados = [list(map(str, dados.columns))] + dados.astype(str).values.tolist()
 
         tabela = Table(tabela_dados, repeatRows=1)
 

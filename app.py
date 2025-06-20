@@ -1,6 +1,6 @@
 # app.py
 import streamlit as st
-from utils.pdf_generator import gerar_pdf
+ from utils.pdf_generator import gerar_pdf
 from utils.sheets_helper import carregar_dados, inserir_ocorrencia, conectar
 
 # Configurações iniciais

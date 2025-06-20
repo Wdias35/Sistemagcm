@@ -85,12 +85,13 @@ def main():
                     st.exception(e)
 
     elif opc == "Gerar relatório PDF":
-        st.write("previa dos dados do relatório")
-        st.dataframe(dados)
         st.header("📄 Relatório PDF")
         try:
             dados = carregar_dados("todas" if user == "mestre" else user)
             if not dados.empty:
+            st.write("Prévia dos dados do relatório")
+            st.dataframe(dados)
+
                 pdf_bytes = gerar_pdf(dados)
                 st.download_button(
                     label="⬇️ Baixar Relatório PDF",

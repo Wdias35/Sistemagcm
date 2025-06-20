@@ -6,6 +6,12 @@ from utils.sheets_helper import carregar_dados
 
 st.set_page_config(page_title="Mapa de Calor - GCM", layout="wide")
 st.title("Mapa de Calor das Ocorrências")
+@st.cache_data(ttl=60)
+def carregar_todos_os_dados():
+    return carregar_dados("todas")
+
+dados = carregar_todos_os_dados()
+
 
 dados = carregar_dados("todas")
 

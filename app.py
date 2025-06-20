@@ -1,4 +1,5 @@
 # app.py
+import altair as alt
 import streamlit as st
 import pandas as pd
 import pydeck as pdk

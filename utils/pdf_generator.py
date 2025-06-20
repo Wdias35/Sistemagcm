@@ -14,7 +14,7 @@ def gerar_pdf(dados):
 
     c.setFont("Helvetica", 10)
     for idx, row in dados.iterrows():
-        linha = f"{row.get('Data', '')} - {row.get('Horário', '')} - {row.get('Local', '')} - {row.get('Base Responsável', '')} - {row.get('Tipo de Ocorrência', '')}"
+        linha = f"{row.get('Data', '')} - {row.get('Horário', '')} - {row.get('Local', '')} - {row.get('Base Responsável', '')} - {row.get('Tipo de Ocorrência', '')} - {row.get('Latitude', '')} - {row.get('Longitude', '')}"
         c.drawString(50, y, linha)
         y -= 15
         if y < 50:

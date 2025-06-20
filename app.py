@@ -1,5 +1,7 @@
 # app.py
 import streamlit as st
+import pandas as pd
+import pydeck as pdk
 from utils.pdf_generator import gerar_pdf
 from utils.sheets_helper import carregar_dados, inserir_ocorrencia, conectar
 
@@ -21,10 +23,6 @@ USUARIOS = {
     "base2": "senha2",
     "base3": "senha3",
     "base4": "senha4",
-    "base5": "senha5",
-    "base6": "senha6",
-    "base7": "senha7",
-    "base8": "senha8",
     "mestre": "master123"
 }
 
@@ -40,6 +38,49 @@ def login():
             st.error("Usuário ou senha inválidos")
     if "login" not in st.session_state or st.session_state["login"] is None:
         st.stop()
+
+def exibir_mapa(dados):
+    st.header("🗺️ Visualização Geográfica")
+
+    mapa_tipo = st.sidebar.radio("Tipo de mapa", ["Mapa de Calor", "Mapa com Pontos"])
+
+    dados_geo = dados.copy()
+    dados_geo = dados_geo[(dados_geo["latitude"] != "") & (dados_geo["longitude"] != "")]
+    dados_geo["latitude"] = pd.to_numeric(dados_geo["latitude"], errors="coerce")
+    dados_geo["longitude"] = pd.to_numeric(dados_geo["longitude"], errors="coerce")
+    dados_geo = dados_geo.dropna(subset=["latitude", "longitude"])
+
+    if dados_geo.empty:
+        st.warning("⚠️ Nenhum dado geográfico disponível.")
+        return
+
+    if mapa_tipo == "Mapa de Calor":
+        layer = pdk.Layer(
+            "HeatmapLayer",
+            data=dados_geo,
+            get_position='[longitude, latitude]',
+            aggregation=pdk.types.String("MEAN"),
+            get_weight=1,
+            radiusPixels=60,
+        )
+    else:
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=dados_geo,
+            get_position='[longitude, latitude]',
+            get_radius=100,
+            get_fill_color='[200, 30, 0, 160]',
+            pickable=True,
+        )
+
+    view_state = pdk.ViewState(
+        latitude=dados_geo["latitude"].mean(),
+        longitude=dados_geo["longitude"].mean(),
+        zoom=11,
+        pitch=0
+    )
+
+    st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
 
 def main():
     login()
@@ -114,6 +155,7 @@ def main():
         try:
             dados = carregar_dados("todas")
             st.dataframe(dados)
+            exibir_mapa(dados)
         except Exception as e:
             st.error("Erro ao carregar dados:")
             st.exception(e)
@@ -122,3 +164,4 @@ if __name__ == "__main__":
     if "login" not in st.session_state:
         st.session_state["login"] = None
     main()
+

@@ -73,15 +73,16 @@ def exibir_mapa(dados):
             pickable=True,
         )
 
-  view_state = pdk.ViewState(
-    latitude=-23.4545,     # Guarulhos - SP
-    longitude=-46.5333,
-    zoom=11,
-    pitch=0
-)
-
+    # Força o centro do mapa para Guarulhos
+    view_state = pdk.ViewState(
+        latitude=-23.4545,
+        longitude=-46.5333,
+        zoom=11,
+        pitch=0
+    )
 
     st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
+
 
 def main():
     login()

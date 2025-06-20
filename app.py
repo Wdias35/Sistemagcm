@@ -21,6 +21,10 @@ USUARIOS = {
     "base2": "senha2",
     "base3": "senha3",
     "base4": "senha4",
+    "base5": "senha5",
+    "base6": "senha6",
+    "base7": "senha7",
+    "base8": "senha8",
     "mestre": "master123"
 }
 

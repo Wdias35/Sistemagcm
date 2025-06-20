@@ -1,4 +1,3 @@
-# app.py
 import altair as alt
 import streamlit as st
 import pandas as pd
@@ -18,7 +17,7 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# Banco de usuários (base + login mestre)
+# Banco de usuários
 USUARIOS = {
     "base1": "senha1",
     "base2": "senha2",
@@ -42,9 +41,7 @@ def login():
 
 def exibir_mapa(dados):
     st.header("🗺️ Visualização Geográfica")
-
     mapa_tipo = st.sidebar.radio("Tipo de mapa", ["Mapa de Calor", "Mapa com Pontos"])
-
     dados_geo = dados.copy()
     dados_geo = dados_geo[(dados_geo["latitude"] != "") & (dados_geo["longitude"] != "")]
     dados_geo["latitude"] = pd.to_numeric(dados_geo["latitude"], errors="coerce")
@@ -74,7 +71,6 @@ def exibir_mapa(dados):
             pickable=True,
         )
 
-    # Força o centro do mapa para Guarulhos
     view_state = pdk.ViewState(
         latitude=-23.4545,
         longitude=-46.5333,
@@ -84,7 +80,6 @@ def exibir_mapa(dados):
 
     st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
 
-
 def main():
     login()
     user = st.session_state["login"]
@@ -92,16 +87,13 @@ def main():
     st.sidebar.title("📋 Menu")
     if user == "mestre":
         st.sidebar.write("🔑 Login Mestre - acesso total")
-        #opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Gerar relatório PDF"])
-    opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Dashboard", "Gerar relatório PDF"])
-
+        opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Dashboard", "Gerar relatório PDF"])
     else:
         st.sidebar.write(f"👮‍♂️ Base: {user}")
         opc = st.sidebar.selectbox("O que deseja fazer?", ["Enviar ocorrência", "Gerar relatório PDF"])
 
     if opc == "Enviar ocorrência":
         st.header("📌 Registrar Ocorrência")
-
         with st.form("form_ocorrencia", clear_on_submit=True):
             data = st.date_input("Data")
             horario = st.time_input("Horário")
@@ -165,8 +157,41 @@ def main():
             st.error("Erro ao carregar dados:")
             st.exception(e)
 
+    elif opc == "Dashboard" and user == "mestre":
+        st.header("📈 Dashboard de Ocorrências")
+        try:
+            dados = carregar_dados("todas")
+            dados["data"] = pd.to_datetime(dados["data"], format="%d/%m/%Y", errors="coerce")
+
+            st.subheader("Ocorrências por Tipo")
+            chart_tipo = alt.Chart(dados).mark_bar().encode(
+                x=alt.X("tipo", title="Tipo de Ocorrência"),
+                y=alt.Y("count()", title="Quantidade"),
+                tooltip=["tipo", "count()"]
+            ).properties(width=600)
+            st.altair_chart(chart_tipo)
+
+            st.subheader("Ocorrências por Base")
+            chart_base = alt.Chart(dados).mark_bar(color="orange").encode(
+                x=alt.X("base", title="Base Responsável"),
+                y=alt.Y("count()", title="Quantidade"),
+                tooltip=["base", "count()"]
+            ).properties(width=600)
+            st.altair_chart(chart_base)
+
+            st.subheader("Ocorrências por Data")
+            chart_data = alt.Chart(dados).mark_bar(color="green").encode(
+                x=alt.X("data:T", title="Data"),
+                y=alt.Y("count()", title="Total"),
+                tooltip=["data", "count()"]
+            ).properties(width=700)
+            st.altair_chart(chart_data)
+
+        except Exception as e:
+            st.error("Erro ao gerar gráficos:")
+            st.exception(e)
+
 if __name__ == "__main__":
     if "login" not in st.session_state:
         st.session_state["login"] = None
     main()
-

@@ -1,16 +1,18 @@
+import streamlit as st
 import gspread
 import pandas as pd
 from google.oauth2.service_account import Credentials
-import streamlit as st
 
-# Nome da planilha
+# Nome da planilha no Google Sheets
 NOME_PLANILHA = "SistemaGCM"
 
+# Conecta com a planilha usando credenciais do Streamlit Secrets
 def conectar():
     creds = Credentials.from_service_account_info(st.secrets["creds"])
     client = gspread.authorize(creds)
     return client
 
+# Carrega os dados da aba específica (base) ou de todas
 def carregar_dados(base):
     client = conectar()
     planilha = client.open(NOME_PLANILHA)
@@ -25,24 +27,26 @@ def carregar_dados(base):
             aba = planilha.worksheet(base)
             valores = aba.get_all_records()
             dados_finais.extend(valores)
-        except Exception as e:
-            st.warning(f"Aba '{base}' não encontrada.")
-    
+        except:
+            pass
+
     return pd.DataFrame(dados_finais)
 
+# Insere nova ocorrência com todos os campos, incluindo latitude e longitude
 def inserir_ocorrencia(registro, base):
     try:
         client = conectar()
         planilha = client.open(NOME_PLANILHA)
+
+        # Tenta acessar a aba. Se não existir, cria e define cabeçalho
         try:
             aba = planilha.worksheet(base)
         except:
-            # Cria a aba com todos os campos esperados
             aba = planilha.add_worksheet(title=base, rows="1000", cols="20")
             cabecalho = ["data", "horario", "local", "base", "tipo", "observacoes", "latitude", "longitude"]
             aba.append_row(cabecalho)
 
-        # Reorganiza os valores na mesma ordem das colunas
+        # Garante que os dados estejam na ordem correta
         valores = [
             registro.get("data", ""),
             registro.get("horario", ""),
@@ -56,7 +60,5 @@ def inserir_ocorrencia(registro, base):
         aba.append_row(valores)
         return True
     except Exception as e:
-        st.error(f"Erro ao inserir ocorrência: {e}")
-        return true
-
-
+        print("Erro ao inserir ocorrência:", e)
+        return False

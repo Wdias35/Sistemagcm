@@ -82,40 +82,4 @@ def main():
                     st.success("✅ Ocorrência registrada com sucesso!")
                 except Exception as e:
                     st.error("❌ Erro ao registrar ocorrência:")
-                    st.exception(e)
-
-    elif opc == "Gerar relatório PDF":
-        st.header("📄 Relatório PDF")
-        try:
-            dados = carregar_dados("todas" if user == "mestre" else user)
-            if not dados.empty:
-            st.write("Prévia dos dados do relatório")
-            st.dataframe(dados)
-
-                pdf_bytes = gerar_pdf(dados)
-                st.download_button(
-                    label="⬇️ Baixar Relatório PDF",
-                    data=pdf_bytes,
-                    file_name="relatorio_ocorrencias.pdf",
-                    mime="application/pdf"
-                )
-            else:
-                st.info("Nenhuma ocorrência encontrada.")
-        except Exception as e:
-            st.error("Erro ao gerar relatório:")
-            st.exception(e)
-
-    elif opc == "Ver dados" and user == "mestre":
-        st.header("📊 Dados de todas as bases")
-        try:
-
-            dados = carregar_dados("todas")
-            st.dataframe(dados)
-        except Exception as e:
-            st.error("Erro ao carregar dados:")
-            st.exception(e)
-
-if __name__ == "__main__":
-    if "login" not in st.session_state:
-        st.session_state["login"] = None
-    main()
+                    st.exce

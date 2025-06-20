@@ -48,7 +48,9 @@ def inserir_ocorrencia(dados, base):
         dados["local"],
         dados["base"],
         dados["tipo"],
-        dados["observacoes"]
+        dados["observacoes"],
+        dados["latitude"],
+        dados["longitude"]
     ]
     aba.insert_row(linha, ultima_linha)
     return True

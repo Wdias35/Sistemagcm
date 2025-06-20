@@ -92,7 +92,9 @@ def main():
     st.sidebar.title("📋 Menu")
     if user == "mestre":
         st.sidebar.write("🔑 Login Mestre - acesso total")
-        opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Gerar relatório PDF"])
+        #opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Gerar relatório PDF"])
+    opc = st.sidebar.selectbox("O que deseja fazer?", ["Ver dados", "Dashboard", "Gerar relatório PDF"])
+
     else:
         st.sidebar.write(f"👮‍♂️ Base: {user}")
         opc = st.sidebar.selectbox("O que deseja fazer?", ["Enviar ocorrência", "Gerar relatório PDF"])

@@ -62,6 +62,8 @@ def main():
                 "Prisão em Flagrante", "Procurado Capturado"
             ])
             observacoes = st.text_area("Observações")
+            latitude = st.text_area("Latitude")
+            longitude = st.text_area("Longitude")
 
             enviar = st.form_submit_button("Enviar")
             if enviar:
@@ -71,7 +73,9 @@ def main():
                     "local": local,
                     "base": base_responsavel,
                     "tipo": tipo,
-                    "observacoes": observacoes
+                    "observacoes": observacoes,
+                    "latitude": latitude,
+                    "longitude": longitude
                 }
                 try:
                     sucesso = inserir_ocorrencia(registro, base_responsavel)

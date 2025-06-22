@@ -1,22 +1,15 @@
-import streamlit as st
 import gspread
-from google.oauth2.service_account import Credentials
 import pandas as pd
+from google.oauth2.service_account import Credentials
+import streamlit as st
 
-SHEET_NAME = "SistemaGCM"
 NOME_PLANILHA = "SistemaGCM"
 
-# Conecta com a planilha Google via Streamlit Secrets
 def conectar():
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    creds = Credentials.from_service_account_info(st.secrets["creds"], scopes=scopes)
+    creds = Credentials.from_service_account_info(st.secrets["creds"])
     client = gspread.authorize(creds)
     return client
 
-# Carrega os dados da aba específica (ou todas as abas)
 def carregar_dados(base):
     client = conectar()
     planilha = client.open(NOME_PLANILHA)
@@ -36,21 +29,28 @@ def carregar_dados(base):
 
     return pd.DataFrame(dados_finais)
 
-# Insere uma nova ocorrência na aba correspondente
-def inserir_ocorrencia(dados, base):
-    client = conectar()
-    planilha = client.open(NOME_PLANILHA)
-    aba = planilha.worksheet(base)
-    ultima_linha = len(aba.get_all_values()) + 1
-    linha = [
-        dados["data"],
-        dados["horario"],
-        dados["local"],
-        dados["base"],
-        dados["tipo"],
-        dados["observacoes"],
-        dados["latitude"],
-        dados["longitude"]
-    ]
-    aba.insert_row(linha, ultima_linha)
-    return True
+def inserir_ocorrencia(registro, base):
+    try:
+        client = conectar()
+        planilha = client.open(NOME_PLANILHA)
+
+        try:
+            aba = planilha.worksheet(base)
+        except:
+            aba = planilha.add_worksheet(title=base, rows="1000", cols="20")
+            cabecalho = list(registro.keys())
+            aba.append_row(cabecalho)
+
+        cabecalho_atual = aba.row_values(1)
+        if not cabecalho_atual:
+            aba.append_row(list(registro.keys()))
+        elif cabecalho_atual != list(registro.keys()):
+            st.error("❌ Cabeçalho da planilha não está compatível com o sistema.")
+            return False
+
+        valores = list(registro.values())
+        aba.append_row(valores)
+        return True
+    except Exception as e:
+        st.error(f"Erro ao inserir ocorrência: {e}")
+        return False
